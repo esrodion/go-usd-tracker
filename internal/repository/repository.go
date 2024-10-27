@@ -3,24 +3,27 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"go-usdtrub/internal/config"
 	"go-usdtrub/internal/models"
 
-	postgres "go-usdtrub/internal/repository/db/postgres"
+	database "go-usdtrub/internal/repository/db"
+
+	"github.com/golang-migrate/migrate/v4"
 )
 
 type Repository struct {
-	db  *sql.DB
-	cfg *config.Config
+	db       *sql.DB
+	migrator *migrate.Migrate
+	cfg      *config.Config
 }
 
-func NewRepository(db *sql.DB, cfg *config.Config) (*Repository, error) {
+func NewRepository(cfg *config.Config) (*Repository, error) {
 	var err error
 
 	repo := &Repository{
-		db:  db,
 		cfg: cfg,
 	}
 
@@ -31,16 +34,16 @@ func NewRepository(db *sql.DB, cfg *config.Config) (*Repository, error) {
 		}
 	}
 
-	if repo.db == nil {
-		repo.db, err = postgres.NewPostgresDB(repo.cfg.PostgresConfig)
-		if err != nil {
-			return nil, fmt.Errorf("repository.NewRepository: could not open postgres db: %w", err)
-		}
+	db, m, err := database.NewPostgresDB(repo.cfg.PostgresConfig)
+	if err != nil {
+		return nil, fmt.Errorf("repository.NewRepository: could not open postgres db: %w", err)
 	}
+	repo.db, repo.migrator = db, m
 
 	if repo.cfg.AutoMigrateUp == "true" {
-		err = postgres.MigrateUp(repo.db, repo.cfg.MigrationsURL)
+		err = repo.migrator.Up()
 		if err != nil {
+			repo.db.Close()
 			return nil, fmt.Errorf("repository.NewRepository: auto migration failed: %w", err)
 		}
 	}
@@ -49,6 +52,13 @@ func NewRepository(db *sql.DB, cfg *config.Config) (*Repository, error) {
 }
 
 func (repo *Repository) Close() error {
+	if repo.cfg.AutoMigrateDown == "true" {
+		err := repo.migrator.Down()
+		if err != nil {
+			return errors.Join(fmt.Errorf("repository.NewRepository: auto migration failed: %w", err), repo.db.Close())
+		}
+	}
+
 	return repo.db.Close()
 }
 

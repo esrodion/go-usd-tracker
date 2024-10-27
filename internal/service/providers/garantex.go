@@ -74,9 +74,9 @@ type depth struct {
 }
 
 type depthEntry struct {
-	Price  float64 `json:"price"`
-	Volume float64 `json:"volume"`
-	Amount float64 `json:"amount"`
-	Factor float64 `json:"factor"`
+	Price  float64 `json:"price,string"`
+	Volume float64 `json:"volume,string"`
+	Amount float64 `json:"amount,string"`
+	Factor float64 `json:"factor,string"`
 	Type   string  `json:"type"`
 }
