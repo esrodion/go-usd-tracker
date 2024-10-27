@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "ratesgrpc/";
+
+package ratesgrpc;
+
+service Rates {
+    rpc GetRates(GetRatesParams) returns (Rate) {}
+}
+
+message Rate {
+    int64 Timestamp = 1;
+    double Ask = 2;
+    double Bid = 3;
+}
+
+message GetRatesParams {}
