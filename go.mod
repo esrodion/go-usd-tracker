@@ -5,6 +5,7 @@ go 1.22.5
 require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/golang-migrate/migrate/v4 v4.18.1
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.34.2

@@ -1,7 +1,21 @@
 package main
 
-import "fmt"
+import (
+	"go-usdtrub/internal/app"
+	"log"
+
+	"github.com/joho/godotenv"
+)
 
 func main() {
-	fmt.Println("not implemented")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	app := app.NewApp()
+	err = app.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

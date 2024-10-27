@@ -23,7 +23,7 @@ func NewConfig() (*Config, error) {
 }
 
 type PostgresConfig struct {
-	Conn            string `env:"POSTGRES_CONN" envDefault:"postgres://test:test@db:5432/test?sslmode=disable"`
+	Conn            string `env:"POSTGRES_CONN"`
 	AutoMigrateUp   string `env:"AUTO_MIGRATE_UP" envDefault:"true"`
 	AutoMigrateDown string `env:"AUTO_MIGRATE_DOWN" envDefault:"false"`
 	MigrationsURL   string `env:"MIGRATIONS_URL" envDefault:"file:///goserver/internal/repository/db/migrations/"`
