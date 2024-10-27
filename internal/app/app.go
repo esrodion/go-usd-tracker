@@ -1,11 +1,14 @@
 package app
 
 import (
+	"context"
 	"go-usdtrub/internal/config"
 	"go-usdtrub/internal/controller"
 	"go-usdtrub/internal/repository"
+	"go-usdtrub/internal/router"
 	"go-usdtrub/internal/service"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -37,15 +40,29 @@ func (app *App) Run() error {
 	}
 
 	serv := service.NewService(repo)
-	cont, err := controller.NewGrpcController(serv, cfg.ServerAddress)
+	cont, err := controller.NewGrpcController(serv, cfg.GrpcAddress)
 	if err != nil {
 		return err
 	}
+
+	server := http.Server{
+		Addr:    cfg.HttpAddress,
+		Handler: router.NewRouter(controller.NewHttpController()),
+	}
+	go func() {
+		// TODO: Zap logging
+		log.Println("HTTP server started at " + cfg.HttpAddress)
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	signal.Notify(app.StopSig, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-app.StopSig
 	log.Printf("Received signal: %s\n", sig)
 
 	cont.Stop()
+	server.Shutdown(context.Background())
 	return repo.Close()
 }

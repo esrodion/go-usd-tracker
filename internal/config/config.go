@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	ServerAddress string `env:"SERVER_ADDRESS" envDefault:"0.0.0.0:8080"`
-	LogLevel      string `env:"LOG_LEVEL" envDefault:"DEBUG"`
+	GrpcAddress string `env:"GRPC_SERVER" envDefault:"0.0.0.0:8080"`
+	HttpAddress string `env:"HTTP_SERVER" envDefault:"0.0.0.0:8081"`
+	LogLevel    string `env:"LOG_LEVEL" envDefault:"DEBUG"`
 	PostgresConfig
 }
 
