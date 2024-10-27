@@ -54,7 +54,7 @@ func (c *GrpcController) start(hostName string) (*grpc.Server, error) {
 	pb.RegisterRatesServer(server, c)
 
 	// TODO: Zap logging
-	log.Println("Geo gRPC server started at " + hostName)
+	log.Println("gRPC server started at " + hostName)
 	go func() {
 		err := server.Serve(listener)
 		if err != nil {
