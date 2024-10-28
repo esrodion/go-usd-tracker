@@ -2,12 +2,14 @@ package main
 
 import (
 	"go-usdtrub/internal/app"
-	"log"
+	"go-usdtrub/pkg/logger"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	log := logger.Logger().Sugar().Named("main")
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal(err)

@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"log"
+	"go-usdtrub/pkg/logger"
 	"net/http"
 )
 
@@ -12,6 +12,6 @@ func NewHttpController() *HttpController {
 }
 
 func (c *HttpController) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	log.Println("Received health check request from", r.RemoteAddr)
+	logger.Logger().Sugar().Named("HTTP").Debug("Received health check request from ", r.RemoteAddr)
 	w.WriteHeader(http.StatusOK)
 }

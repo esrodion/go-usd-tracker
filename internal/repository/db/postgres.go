@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"go-usdtrub/internal/config"
-	"log"
+	"go-usdtrub/pkg/logger"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -13,8 +13,7 @@ import (
 )
 
 func NewPostgresDB(cfg config.PostgresConfig) (*sql.DB, *migrate.Migrate, error) {
-	// "TODO: Zap logging"
-	log.Println("Connecting db on: ", cfg.Conn)
+	logger.Logger().Sugar().Named("Postgres").Info("Connecting db on: ", cfg.Conn)
 	db, err := sql.Open("postgres", cfg.Conn)
 
 	if err != nil {

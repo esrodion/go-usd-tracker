@@ -2,9 +2,10 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"go-usdtrub/internal/models"
 	pb "go-usdtrub/pkg/grpc"
-	"log"
+	"go-usdtrub/pkg/logger"
 	"net"
 
 	"google.golang.org/grpc"
@@ -27,13 +28,17 @@ func NewGrpcController(service Service, hostName string) (*GrpcController, error
 	c.service = service
 	c.server, err = c.start(hostName)
 
-	return c, err
+	if err != nil {
+		return nil, fmt.Errorf("controller.NewGrpcController: %w", err)
+	}
+
+	return c, nil
 }
 
 func (c *GrpcController) GetRates(ctx context.Context, p *pb.GetRatesParams) (*pb.Rate, error) {
 	rate, err := c.service.GetRates(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("controller.GrpcController.GetRates: %w", err)
 	}
 
 	result := &pb.Rate{}
@@ -47,18 +52,19 @@ func (c *GrpcController) GetRates(ctx context.Context, p *pb.GetRatesParams) (*p
 func (c *GrpcController) start(hostName string) (*grpc.Server, error) {
 	listener, err := net.Listen("tcp", hostName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("controller.GrpcController.start: %w", err)
 	}
+
+	log := logger.Logger().Sugar().Named("gRPC")
 
 	server := grpc.NewServer()
 	pb.RegisterRatesServer(server, c)
 
-	// TODO: Zap logging
-	log.Println("gRPC server started at " + hostName)
+	log.Info("gRPC server started at ", hostName)
 	go func() {
 		err := server.Serve(listener)
 		if err != nil {
-			log.Fatal(err)
+			log.DPanic(err)
 		}
 	}()
 

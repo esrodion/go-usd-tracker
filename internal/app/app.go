@@ -7,7 +7,7 @@ import (
 	"go-usdtrub/internal/repository"
 	"go-usdtrub/internal/router"
 	"go-usdtrub/internal/service"
-	"log"
+	"go-usdtrub/pkg/logger"
 	"net/http"
 	"os"
 	"os/signal"
@@ -29,10 +29,16 @@ func NewApp() *App {
 func (app *App) Run() error {
 	defer close(app.Done)
 
+	// prepare logger and config
+
+	log := logger.Logger().Sugar().Named("App")
+
 	cfg, err := config.NewConfig()
 	if err != nil {
 		return err
 	}
+
+	// init repository and service layers
 
 	repo, err := repository.NewRepository(cfg)
 	if err != nil {
@@ -40,27 +46,33 @@ func (app *App) Run() error {
 	}
 
 	serv := service.NewService(repo)
+
+	// gRPC controller
+
 	cont, err := controller.NewGrpcController(serv, cfg.GrpcAddress)
 	if err != nil {
 		return err
 	}
+
+	// HTTP controller for healthcheck
 
 	server := http.Server{
 		Addr:    cfg.HttpAddress,
 		Handler: router.NewRouter(controller.NewHttpController()),
 	}
 	go func() {
-		// TODO: Zap logging
-		log.Println("HTTP server started at " + cfg.HttpAddress)
+		log.Info("HTTP server started at ", cfg.HttpAddress)
 		err := server.ListenAndServe()
 		if err != nil {
-			log.Fatal(err)
+			log.DPanic(err.Error())
 		}
 	}()
 
+	// Graceful shutdown
+
 	signal.Notify(app.StopSig, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-app.StopSig
-	log.Printf("Received signal: %s\n", sig)
+	log.Info("Received signal: ", sig)
 
 	cont.Stop()
 	server.Shutdown(context.Background())
