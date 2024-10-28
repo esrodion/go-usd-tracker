@@ -3,10 +3,12 @@ package controller
 import (
 	"context"
 	"fmt"
+	"go-usdtrub/internal/metrics"
 	"go-usdtrub/internal/models"
 	pb "go-usdtrub/pkg/grpc"
 	"go-usdtrub/pkg/logger"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -36,6 +38,9 @@ func NewGrpcController(service Service, hostName string) (*GrpcController, error
 }
 
 func (c *GrpcController) GetRates(ctx context.Context, p *pb.GetRatesParams) (*pb.Rate, error) {
+	ctx = metrics.GRPCMethodHead(ctx, "GetRates")
+	defer metrics.GRPCMethodTail(ctx, "GetRates", time.Now())
+
 	rate, err := c.service.GetRates(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("controller.GrpcController.GetRates: %w", err)

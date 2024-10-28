@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"go-usdtrub/internal/config"
+	"go-usdtrub/internal/metrics"
 	"go-usdtrub/internal/models"
 
 	database "go-usdtrub/internal/repository/db"
@@ -63,6 +65,8 @@ func (repo *Repository) Close() error {
 }
 
 func (repo *Repository) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
+	defer metrics.DBAccessDuration(ctx, time.Now())
+
 	row := repo.db.QueryRowContext(ctx, `
 		SELECT created_at, ask, bid 
 		FROM usdtrub 
@@ -79,6 +83,8 @@ func (repo *Repository) GetRates(ctx context.Context) (models.CurrenceyRate, err
 }
 
 func (repo *Repository) AddRates(ctx context.Context, rate models.CurrenceyRate) error {
+	defer metrics.DBAccessDuration(ctx, time.Now())
+
 	_, err := repo.db.ExecContext(ctx, `
 		INSERT INTO usdtrub (ask, bid) 
 		VALUES ($1, $2) 
@@ -93,6 +99,8 @@ func (repo *Repository) AddRates(ctx context.Context, rate models.CurrenceyRate)
 }
 
 func (repo *Repository) SetRates(ctx context.Context, rate models.CurrenceyRate) error {
+	defer metrics.DBAccessDuration(ctx, time.Now())
+
 	_, err := repo.db.ExecContext(ctx, `
 		INSERT INTO usdtrub (created_at, ask, bid) 
 		VALUES ($1, $2, $3) 
