@@ -12,21 +12,41 @@ import (
 	"go-usdtrub/internal/models"
 
 	database "go-usdtrub/internal/repository/db"
-
-	"github.com/golang-migrate/migrate/v4"
 )
+
+type Migrator interface {
+	Up() error
+	Down() error
+}
 
 type Repository struct {
 	db       *sql.DB
-	migrator *migrate.Migrate
+	migrator Migrator
 	cfg      *config.Config
 }
 
-func NewRepository(cfg *config.Config) (*Repository, error) {
+type option func(repo *Repository)
+
+func WithDB(db *sql.DB, m Migrator) option {
+	return func(repo *Repository) {
+		repo.db = db
+		repo.migrator = m
+	}
+}
+
+func WithCfg(cfg *config.Config) option {
+	return func(repo *Repository) {
+		repo.cfg = cfg
+	}
+}
+
+func NewRepository(opts ...option) (*Repository, error) {
 	var err error
 
-	repo := &Repository{
-		cfg: cfg,
+	repo := &Repository{}
+
+	for _, opt := range opts {
+		opt(repo)
 	}
 
 	if repo.cfg == nil {
@@ -36,11 +56,13 @@ func NewRepository(cfg *config.Config) (*Repository, error) {
 		}
 	}
 
-	db, m, err := database.NewPostgresDB(repo.cfg.PostgresConfig)
-	if err != nil {
-		return nil, fmt.Errorf("repository.NewRepository: could not open postgres db: %w", err)
+	if repo.db == nil {
+		db, m, err := database.NewPostgresDB(repo.cfg.PostgresConfig)
+		if err != nil {
+			return nil, fmt.Errorf("repository.NewRepository: could not open postgres db: %w", err)
+		}
+		repo.db, repo.migrator = db, m
 	}
-	repo.db, repo.migrator = db, m
 
 	if repo.cfg.AutoMigrateUp == "true" {
 		err = repo.migrator.Up()

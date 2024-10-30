@@ -12,9 +12,11 @@ import (
 )
 
 type HandlerFunc = func(w http.ResponseWriter, r *http.Request)
-type WrapperKey string
+type wrapperKey string
 
-const wrapperKey WrapperKey = "wrapper"
+const WrapperKey wrapperKey = "wrapper"
+
+var ZeroHandler *handlerWrapper = nil // pass to context value to disable metrics collection
 
 func HandlerHTTP() http.Handler {
 	return promhttp.Handler()
@@ -26,18 +28,18 @@ func WrapHandlerFunc(name, route string, handler HandlerFunc) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
 		wrapper.count.Inc()
-		handler(w, r.WithContext(context.WithValue(r.Context(), wrapperKey, wrapper)))
+		handler(w, r.WithContext(context.WithValue(r.Context(), WrapperKey, wrapper)))
 		duration := time.Since(startTime).Seconds()
 		wrapper.duration.Observe(duration)
 	}
 }
 
 func GRPCMethodHead(ctx context.Context, name string) context.Context {
-	return context.WithValue(ctx, wrapperKey, grpcWrapper(name))
+	return context.WithValue(ctx, WrapperKey, grpcWrapper(name))
 }
 
 func GRPCMethodTail(ctx context.Context, name string, startTime time.Time) {
-	wrapper, ok := ctx.Value(wrapperKey).(*handlerWrapper)
+	wrapper, ok := ctx.Value(WrapperKey).(*handlerWrapper)
 	if !ok {
 		logger.Logger().Sugar().Named("GRPC metrics").Error("context does not contain metrics wrapper")
 		return
@@ -47,9 +49,12 @@ func GRPCMethodTail(ctx context.Context, name string, startTime time.Time) {
 }
 
 func DBAccessDuration(ctx context.Context, startTime time.Time) {
-	wrapper, ok := ctx.Value(wrapperKey).(*handlerWrapper)
+	wrapper, ok := ctx.Value(WrapperKey).(*handlerWrapper)
 	if !ok {
 		logger.Logger().Sugar().Named("DB metrics").Error("context does not contain metrics wrapper")
+		return
+	}
+	if wrapper == nil {
 		return
 	}
 	duration := time.Since(startTime).Seconds()

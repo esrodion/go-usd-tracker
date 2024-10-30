@@ -1,21 +1,16 @@
 package app
 
 import (
+	"go-usdtrub/internal/repository"
 	"os"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func TestApp(t *testing.T) {
+func TestAppStartup(t *testing.T) {
 	var err error
 
-	err = os.Setenv("POSTGRES_CONN", "postgres://postgres:yourpassword@localhost:5432/postgres?sslmode=disable")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = os.Setenv("MIGRATIONS_URL", "file://D:/Kata/Repo/goUSDtracker/go-usd-tracker/internal/repository/db/migrations")
-	if err != nil {
-		t.Fatal(err)
-	}
 	err = os.Setenv("AUTO_MIGRATE_UP", "false")
 	if err != nil {
 		t.Fatal(err)
@@ -25,16 +20,35 @@ func TestApp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	app := NewApp()
-
-	go func() {
-		err = app.Run()
-	}()
-
-	app.StopSig <- os.Interrupt
-	<-app.Done
-
+	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatal(err)
 	}
+	mock.ExpectClose()
+
+	repo, err := repository.NewRepository(repository.WithDB(db, &MockMigrator{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	app := NewApp(WithRepo(repo))
+
+	go app.Run()
+
+	err = app.Stop()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+//// Mock Migrator
+
+type MockMigrator struct{}
+
+func (m *MockMigrator) Up() error {
+	return nil
+}
+
+func (m *MockMigrator) Down() error {
+	return nil
 }

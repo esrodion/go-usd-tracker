@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"go-usdtrub/internal/config"
 	"go-usdtrub/internal/controller"
 	"go-usdtrub/internal/repository"
@@ -17,19 +18,33 @@ import (
 type App struct {
 	StopSig chan os.Signal
 	Done    chan os.Signal
+	err     error
+	repo    *repository.Repository
 }
 
-func NewApp() *App {
-	return &App{
+func WithRepo(repo *repository.Repository) func(app *App) {
+	return func(app *App) {
+		app.repo = repo
+	}
+}
+
+func NewApp(opts ...func(app *App)) *App {
+	app := &App{
 		Done:    make(chan os.Signal),
 		StopSig: make(chan os.Signal, 2),
 	}
+
+	for _, opt := range opts {
+		opt(app)
+	}
+
+	return app
 }
 
 func (app *App) Run() error {
 	defer close(app.Done)
 
-	// prepare logger and config
+	// init logger and config
 
 	log := logger.Logger().Sugar().Named("App")
 
@@ -40,12 +55,15 @@ func (app *App) Run() error {
 
 	// init repository and service layers
 
-	repo, err := repository.NewRepository(cfg)
-	if err != nil {
-		return err
+	if app.repo == nil {
+		repo, err := repository.NewRepository(repository.WithCfg(cfg))
+		if err != nil {
+			return err
+		}
+		app.repo = repo
 	}
 
-	serv := service.NewService(repo)
+	serv := service.NewService(app.repo)
 
 	// gRPC controller
 
@@ -75,6 +93,17 @@ func (app *App) Run() error {
 	log.Info("Received signal: ", sig)
 
 	cont.Stop()
-	server.Shutdown(context.Background())
-	return repo.Close()
+	app.err = errors.Join(server.Shutdown(context.Background()), app.repo.Close())
+	return app.err
+}
+
+func (app *App) Stop() error {
+	app.StopSig <- os.Interrupt
+	<-app.Done
+
+	return app.err
+}
+
+func (app *App) Err() error {
+	return app.err
 }
