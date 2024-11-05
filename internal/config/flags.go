@@ -48,12 +48,12 @@ func init() {
 		cfg.AutoMigrateUp = boolToText(amigdown)
 	}
 
-	flag.StringVar(&grpcaddr, "grpcaddr", "", "address:port of grpc server (rates service)")
+	flag.StringVar(&grpcaddr, "grpcaddr", "0.0.0.0:8080", "address:port of grpc server (rates service)")
 	readers["grpcaddr"] = func(cfg *Config, flag *flag.Flag) {
 		cfg.GrpcAddress = grpcaddr
 	}
 
-	flag.StringVar(&httpaddr, "httpaddr", "", "address:port of http server (metrics and health check)")
+	flag.StringVar(&httpaddr, "httpaddr", "0.0.0.0:8081", "address:port of http server (metrics and health check)")
 	readers["httpaddr"] = func(cfg *Config, flag *flag.Flag) {
 		cfg.HttpAddress = httpaddr
 	}

@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
@@ -124,9 +123,7 @@ func (z *zapcoreFileReopen) CheckFile() {
 			logger.Error("Could not open file specified in LOG_FILE environment varibale, exporting logs to os.Stdout: " + err.Error())
 		}
 
-		p := atomic.Pointer[os.File]{}
-		p.Store(outFile)
-		p.Swap(file)
+		*outFile = *file
 	}
 }
 
