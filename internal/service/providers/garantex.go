@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-usdtrub/internal/models"
+	"go-usdtrub/internal/traces"
 	"io"
 	"net/http"
 	"time"
@@ -19,6 +20,9 @@ func NewGarantexProvider() *GarantexProvider {
 }
 
 func (p *GarantexProvider) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
+	ctx, span := traces.Start(ctx, "GarantexGetRates")
+	defer span.End()
+
 	result := models.CurrenceyRate{}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", GarantexEndpoint, nil)

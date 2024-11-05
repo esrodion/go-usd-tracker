@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-usdtrub/internal/metrics"
 	"go-usdtrub/internal/models"
+	"go-usdtrub/internal/traces"
 	pb "go-usdtrub/pkg/grpc"
 	"go-usdtrub/pkg/logger"
 	"net"
@@ -40,6 +41,9 @@ func NewGrpcController(service Service, hostName string) (*GrpcController, error
 func (c *GrpcController) GetRates(ctx context.Context, p *pb.GetRatesParams) (*pb.Rate, error) {
 	ctx = metrics.GRPCMethodHead(ctx, "GetRates")
 	defer metrics.GRPCMethodTail(ctx, "GetRates", time.Now())
+
+	ctx, span := traces.Start(ctx, "GRPCGetRates")
+	defer span.End()
 
 	rate, err := c.service.GetRates(ctx)
 	if err != nil {

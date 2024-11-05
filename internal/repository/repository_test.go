@@ -7,17 +7,12 @@ import (
 	"go-usdtrub/internal/models"
 	"go-usdtrub/pkg/logger"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
-
-// Test DB connection string for integration tests
-const testDBConn = "postgres://postgres:yourpassword@localhost:5432/postgres?sslmode=disable"
-
-// DB migrations URL to access from test executable
-const testMigrations = "file://D:/Kata/Repo/goUSDtracker/go-usd-tracker/internal/repository/db/migrations"
 
 type testCase struct {
 	time     time.Time
@@ -80,12 +75,11 @@ func openRepo(t *testing.T) *Repository {
 
 	cfg.PostgresConfig.AutoMigrateUp = "true"
 	cfg.PostgresConfig.AutoMigrateDown = "true"
-	cfg.PostgresConfig.MigrationsURL = testMigrations
-	cfg.PostgresConfig.Conn = testDBConn
+	cfg.PostgresConfig.Conn = os.Getenv("INTEGRATION_TESTS_DB_CONN")
 
 	repo, err := NewRepository(WithCfg(cfg))
 	if err != nil {
-		logger.Logger().Sugar().Named("repository_test").Debug("Could not connect DB on ", testDBConn, " falling back to mock DB, only unit tests will be performed")
+		logger.Logger().Sugar().Named("repository_test").Debug("Could not connect DB on ", cfg.PostgresConfig.Conn, " falling back to mock DB, only unit tests will be performed")
 
 		DB, mock, err := sqlmock.New()
 		if err != nil {

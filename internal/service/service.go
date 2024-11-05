@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-usdtrub/internal/models"
 	"go-usdtrub/internal/service/providers"
+	"go-usdtrub/internal/traces"
 )
 
 type Repository interface {
@@ -42,6 +43,9 @@ func NewService(repo Repository, opts ...option) *Service {
 }
 
 func (s *Service) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
+	ctx, span := traces.Start(ctx, "ServiceGetRates")
+	defer span.End()
+
 	rate, err := s.provider.GetRates(ctx)
 	if err != nil {
 		return rate, fmt.Errorf("service.Service.GetRates: %w", err)

@@ -84,7 +84,6 @@ func SetLevel(logLevel string) error {
 		atomicLevel.SetLevel(zapcore.ErrorLevel)
 	default:
 		atomicLevel.SetLevel(zapcore.DebugLevel)
-		return fmt.Errorf("logger.SetLevel: unspecified or unkown log level: %s", logLevel)
 	}
 
 	return nil

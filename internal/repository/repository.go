@@ -10,6 +10,9 @@ import (
 	"go-usdtrub/internal/config"
 	"go-usdtrub/internal/metrics"
 	"go-usdtrub/internal/models"
+	"go-usdtrub/internal/traces"
+
+	"github.com/golang-migrate/migrate/v4"
 
 	database "go-usdtrub/internal/repository/db"
 )
@@ -66,7 +69,7 @@ func NewRepository(opts ...option) (*Repository, error) {
 
 	if repo.cfg.AutoMigrateUp == "true" {
 		err = repo.migrator.Up()
-		if err != nil {
+		if err != nil && err != migrate.ErrNoChange {
 			repo.db.Close()
 			return nil, fmt.Errorf("repository.NewRepository: auto migration failed: %w", err)
 		}
@@ -78,7 +81,7 @@ func NewRepository(opts ...option) (*Repository, error) {
 func (repo *Repository) Close() error {
 	if repo.cfg.AutoMigrateDown == "true" {
 		err := repo.migrator.Down()
-		if err != nil {
+		if err != nil && err != migrate.ErrNoChange {
 			return errors.Join(fmt.Errorf("repository.NewRepository: auto migration failed: %w", err), repo.db.Close())
 		}
 	}
@@ -88,6 +91,9 @@ func (repo *Repository) Close() error {
 
 func (repo *Repository) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
 	defer metrics.DBAccessDuration(ctx, time.Now())
+
+	ctx, span := traces.Start(ctx, "RepositoryGetRates")
+	defer span.End()
 
 	row := repo.db.QueryRowContext(ctx, `
 		SELECT created_at, ask, bid 
@@ -107,6 +113,9 @@ func (repo *Repository) GetRates(ctx context.Context) (models.CurrenceyRate, err
 func (repo *Repository) AddRates(ctx context.Context, rate models.CurrenceyRate) error {
 	defer metrics.DBAccessDuration(ctx, time.Now())
 
+	ctx, span := traces.Start(ctx, "RepositoryAddRates")
+	defer span.End()
+
 	_, err := repo.db.ExecContext(ctx, `
 		INSERT INTO usdtrub (ask, bid) 
 		VALUES ($1, $2) 
@@ -122,6 +131,9 @@ func (repo *Repository) AddRates(ctx context.Context, rate models.CurrenceyRate)
 
 func (repo *Repository) SetRates(ctx context.Context, rate models.CurrenceyRate) error {
 	defer metrics.DBAccessDuration(ctx, time.Now())
+
+	ctx, span := traces.Start(ctx, "RepositorySetRates")
+	defer span.End()
 
 	_, err := repo.db.ExecContext(ctx, `
 		INSERT INTO usdtrub (created_at, ask, bid) 

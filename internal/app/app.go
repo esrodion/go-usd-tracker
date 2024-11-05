@@ -8,6 +8,7 @@ import (
 	"go-usdtrub/internal/repository"
 	"go-usdtrub/internal/router"
 	"go-usdtrub/internal/service"
+	"go-usdtrub/internal/traces"
 	"go-usdtrub/pkg/logger"
 	"net/http"
 	"os"
@@ -44,11 +45,26 @@ func NewApp(opts ...func(app *App)) *App {
 func (app *App) Run() error {
 	defer close(app.Done)
 
-	// init logger and config
+	ctx := context.Background()
+
+	// init config and logger
+
+	cfg, err := config.NewConfig()
+	if err != nil {
+		return err
+	}
+
+	config.ReadFlags(cfg)
+	if !config.ReadFlags(cfg) {
+		config.PrintCLIUsage()
+		return nil
+	}
 
 	log := logger.Logger().Sugar().Named("App")
 
-	cfg, err := config.NewConfig()
+	// init tracer
+
+	err = traces.Init(ctx, "go-usd-tracker")
 	if err != nil {
 		return err
 	}
@@ -76,12 +92,12 @@ func (app *App) Run() error {
 
 	server := http.Server{
 		Addr:    cfg.HttpAddress,
-		Handler: router.NewRouter(controller.NewHttpController()),
+		Handler: router.NewRouter(controller.NewHttpController(serv)),
 	}
 	go func() {
 		log.Info("HTTP server started at ", cfg.HttpAddress)
 		err := server.ListenAndServe()
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			log.DPanic(err.Error())
 		}
 	}()
@@ -92,8 +108,16 @@ func (app *App) Run() error {
 	sig := <-app.StopSig
 	log.Info("Received signal: ", sig)
 
+	log.Info("Closing grpc server...")
 	cont.Stop()
-	app.err = errors.Join(server.Shutdown(context.Background()), app.repo.Close())
+
+	log.Info("Closing http server...")
+	errHttp := server.Shutdown(ctx)
+
+	log.Info("Closing database connection...")
+	errRepo := app.repo.Close()
+
+	app.err = errors.Join(errHttp, errRepo)
 	return app.err
 }
 
