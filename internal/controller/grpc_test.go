@@ -59,6 +59,6 @@ type MockService struct {
 	Ask, Bid float64
 }
 
-func (m MockService) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
-	return models.CurrenceyRate{Ask: m.Ask, Bid: m.Bid}, nil
+func (m MockService) GetRates(ctx context.Context) (models.CurrencyRate, error) {
+	return models.CurrencyRate{Ask: m.Ask, Bid: m.Bid}, nil
 }

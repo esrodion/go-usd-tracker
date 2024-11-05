@@ -19,12 +19,12 @@ func TestService(t *testing.T) {
 
 type MockRepository struct{}
 
-func (repo *MockRepository) AddRates(ctx context.Context, rate models.CurrenceyRate) error {
+func (repo *MockRepository) AddRates(ctx context.Context, rate models.CurrencyRate) error {
 	return nil
 }
 
 type MockRatesProvider struct{}
 
-func (rp *MockRatesProvider) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
-	return models.CurrenceyRate{}, nil
+func (rp *MockRatesProvider) GetRates(ctx context.Context) (models.CurrencyRate, error) {
+	return models.CurrencyRate{}, nil
 }

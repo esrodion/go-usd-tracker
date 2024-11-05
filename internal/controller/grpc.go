@@ -15,7 +15,7 @@ import (
 )
 
 type Service interface {
-	GetRates(ctx context.Context) (models.CurrenceyRate, error)
+	GetRates(ctx context.Context) (models.CurrencyRate, error)
 }
 
 type GrpcController struct {

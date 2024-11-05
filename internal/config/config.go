@@ -2,13 +2,16 @@ package config
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/caarlos0/env/v6"
 )
 
 type Config struct {
 	GrpcAddress string `env:"GRPC_SERVER" envDefault:"0.0.0.0:8080"`
+	GrpcPort    string
 	HttpAddress string `env:"HTTP_SERVER" envDefault:"0.0.0.0:8081"`
+	HttpPort    string
 	LogLevel    string `env:"LOG_LEVEL" envDefault:"DEBUG"`
 	PostgresConfig
 }
@@ -20,6 +23,11 @@ func NewConfig() (*Config, error) {
 	if err != nil {
 		err = fmt.Errorf("config.NewConfig: %w", err)
 	}
+
+	re := regexp.MustCompile(`:(\d)*`)
+	config.GrpcPort = re.FindString(config.GrpcAddress)[1:]
+	config.HttpPort = re.FindString(config.HttpAddress)[1:]
+
 	return config, err
 }
 

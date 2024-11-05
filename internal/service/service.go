@@ -9,11 +9,11 @@ import (
 )
 
 type Repository interface {
-	AddRates(context.Context, models.CurrenceyRate) error
+	AddRates(context.Context, models.CurrencyRate) error
 }
 
 type RatesProvider interface {
-	GetRates(context.Context) (models.CurrenceyRate, error)
+	GetRates(context.Context) (models.CurrencyRate, error)
 }
 
 type Service struct {
@@ -42,7 +42,7 @@ func NewService(repo Repository, opts ...option) *Service {
 	return s
 }
 
-func (s *Service) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
+func (s *Service) GetRates(ctx context.Context) (models.CurrencyRate, error) {
 	ctx, span := traces.Start(ctx, "ServiceGetRates")
 	defer span.End()
 

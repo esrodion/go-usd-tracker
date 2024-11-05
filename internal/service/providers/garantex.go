@@ -19,11 +19,11 @@ func NewGarantexProvider() *GarantexProvider {
 	return &GarantexProvider{}
 }
 
-func (p *GarantexProvider) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
+func (p *GarantexProvider) GetRates(ctx context.Context) (models.CurrencyRate, error) {
 	ctx, span := traces.Start(ctx, "GarantexGetRates")
 	defer span.End()
 
-	result := models.CurrenceyRate{}
+	result := models.CurrencyRate{}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", GarantexEndpoint, nil)
 	if err != nil {

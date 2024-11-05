@@ -89,7 +89,7 @@ func (repo *Repository) Close() error {
 	return repo.db.Close()
 }
 
-func (repo *Repository) GetRates(ctx context.Context) (models.CurrenceyRate, error) {
+func (repo *Repository) GetRates(ctx context.Context) (models.CurrencyRate, error) {
 	defer metrics.DBAccessDuration(ctx, time.Now())
 
 	ctx, span := traces.Start(ctx, "RepositoryGetRates")
@@ -101,7 +101,7 @@ func (repo *Repository) GetRates(ctx context.Context) (models.CurrenceyRate, err
 		ORDER BY created_at DESC
 		LIMIT 1`)
 
-	result := models.CurrenceyRate{}
+	result := models.CurrencyRate{}
 	err := row.Scan(&result.Timestamp, &result.Ask, &result.Bid)
 	if err != nil {
 		return result, fmt.Errorf("repository.Repository: could not fetch rates: %w", err)
@@ -110,7 +110,7 @@ func (repo *Repository) GetRates(ctx context.Context) (models.CurrenceyRate, err
 	return result, nil
 }
 
-func (repo *Repository) AddRates(ctx context.Context, rate models.CurrenceyRate) error {
+func (repo *Repository) AddRates(ctx context.Context, rate models.CurrencyRate) error {
 	defer metrics.DBAccessDuration(ctx, time.Now())
 
 	ctx, span := traces.Start(ctx, "RepositoryAddRates")
@@ -129,7 +129,7 @@ func (repo *Repository) AddRates(ctx context.Context, rate models.CurrenceyRate)
 	return nil
 }
 
-func (repo *Repository) SetRates(ctx context.Context, rate models.CurrenceyRate) error {
+func (repo *Repository) SetRates(ctx context.Context, rate models.CurrencyRate) error {
 	defer metrics.DBAccessDuration(ctx, time.Now())
 
 	ctx, span := traces.Start(ctx, "RepositorySetRates")

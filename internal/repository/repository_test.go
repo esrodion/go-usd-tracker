@@ -38,7 +38,7 @@ func TestRepository(t *testing.T) {
 	ctx := context.WithValue(context.Background(), metrics.WrapperKey, metrics.ZeroHandler)
 
 	for _, tcase := range testCases {
-		err := repo.AddRates(ctx, models.CurrenceyRate{Ask: tcase.ask, Bid: tcase.bid})
+		err := repo.AddRates(ctx, models.CurrencyRate{Ask: tcase.ask, Bid: tcase.bid})
 		if err != nil {
 			t.Fatal(err)
 		}

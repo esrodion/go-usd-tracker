@@ -92,7 +92,7 @@ func (app *App) Run() error {
 
 	server := http.Server{
 		Addr:    cfg.HttpAddress,
-		Handler: router.NewRouter(controller.NewHttpController(serv)),
+		Handler: router.NewRouter(controller.NewHttpController(serv), cfg),
 	}
 	go func() {
 		log.Info("HTTP server started at ", cfg.HttpAddress)
