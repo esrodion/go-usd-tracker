@@ -33,7 +33,12 @@ func TestAppStartup(t *testing.T) {
 
 	app := NewApp(WithRepo(repo))
 
-	go app.Run()
+	go func() {
+		err := app.Run()
+		if err != nil {
+			t.Log(err) // handled at app.Stop()
+		}
+	}()
 
 	err = app.Stop()
 	if err != nil {

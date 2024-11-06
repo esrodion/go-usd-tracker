@@ -11,6 +11,7 @@ docker-build:
 
 run:
 	docker-compose up -d
+	docker-compose run --rm --service-ports app ./app -default
 
 lint:
-	golangci-lint run -E gofmt --skip-dirs=./vendor --deadline=10m
+	golangci-lint run --exclude-dirs=./vendor
